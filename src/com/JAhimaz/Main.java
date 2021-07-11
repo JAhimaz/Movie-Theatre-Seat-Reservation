@@ -20,51 +20,72 @@ public class Main {
         System.out.println("║                         >> ADMINISTRATOR SETUP <<                          ║");
         System.out.println("║                                                                            ║");
         System.out.println("╚════════════════════════════════════════════════════════════════════════════╝");
+        // The end-user selects the number of SEATS they which to have in the Theatre (100-200)
         System.out.print("\nPlease Enter The Number of SEATS in the Theatre: ");
+        // This sends it through a custom library called InputHandling that checks if the input
+        // is an Integer and is within the given range.
         int numberOfSeats = InputHandling.Integer(100, 200);
         System.out.print("Number of SEATS set to: " + numberOfSeats + "\n");
-
+        // Similarily the end-user selects the number of USERS that will be making an attempt
+        // to buy seats in the Theatre.
         System.out.print("\nPlease Enter The Number of USERS in the Theatre: ");
-        int numberOfUsers = InputHandling.Integer(1000, 2000);
+        int numberOfUsers = InputHandling.Integer(100, 2000);
         System.out.print("Number of USERS set to: " + numberOfUsers + "\n");
 
+        // These variables are then passed down to the booking scenario.
         bookingScenario(numberOfSeats, numberOfUsers);
     }
 
     public static void bookingScenario(int numberOfSeats, int numberOfUsers){
+        // A Theatre object is initialised, since there is only 1 Theatre in the cinema.
         Theatre theatre = new Theatre(numberOfSeats, "Sunway Pyramid TGV");
-
+        // An executor service is used as there is a large number of threads required.
+        // This is assigned by the number of USERS inputted by the end-user.
         ExecutorService executor = Executors.newFixedThreadPool(numberOfUsers);
-
+        // A for loop is run creating the user class and executing the run() statement
+        // of each USER thread simultaneously.
         for(int i = 0; i < numberOfUsers; i++){
             Runnable user = new User(theatre);
             executor.execute(user);
         }
-
+        // Once all USERS have completed, or the theatre is full, the executor will shutdown.
         executor.shutdown();  
+        // The following While statement is to keep threads Alive.
         while (!executor.isTerminated()) {   }  
 
+        // This for loop prints out all the seat numbers (+1), so it does not start at 0, and
+        // checks whether or not the seat has been purchased/reserved or is available. This is
+        // whats used for verifying the purchase of each seat.
+        System.out.println("\n\n════════════════════════════════════════════════════════════════════════════════");
+        System.out.println("\n                               Seat Verification\n");
+        System.out.println("\n════════════════════════════════════════════════════════════════════════════════\n\n");
         for (int i = 0; i < theatre.getNumberOfSeats(); i++) {
-            System.out.println("Seat Number (" + (theatre.returnSeats().get(i).getSeatNumber() + 1) + ") : " + theatre.returnSeats().get(i).getStatusOfSeat() + " | Owned By: " + theatre.returnSeats().get(i).getPurchaser());
+            System.out.println("Seat Number (" + (theatre.returnSeats().get(i).getSeatNumber()) + ") : " + theatre.returnSeats().get(i).getStatusOfSeat() + " | Owned By: " + theatre.returnSeats().get(i).getPurchaser());
         }
         
         if(!theatre.isAvailableSeats()){
             System.out.println("\n\n════════════════════════════════════════════════════════════════════════════════");
-            System.out.println("\nTheatre is Fully Booked\n");
-            System.out.println("════════════════════════════════════════════════════════════════════════════════\n\n");
+            System.out.println("\n                           Theatre is Fully Booked\n");
+            System.out.println("                           Total Reserved Seats: " + theatre.getTotalReservedSeats());
+            System.out.println("                           Total Purchased Seats: " + theatre.getTotalPurchasedSeats());
+            System.out.println("\n════════════════════════════════════════════════════════════════════════════════\n\n");
         }else{
             System.out.println("\n\n════════════════════════════════════════════════════════════════════════════════");
-            System.out.println("\nTheatre Still Has Remaining Available Seats\n");
+            System.out.println("\n                  Theatre Still Has Remaining Available Seats\n");
             System.out.println("════════════════════════════════════════════════════════════════════════════════\n\n");
         }
     }
 }
 
 class Theatre {
-    
+
     private String theatreName;
     private int numberOfSeats;
     private List<Seat> seats = new ArrayList<Seat>();
+
+    // For Debugging
+    private int totalPurchasedSeats = 0;
+    private int totalReservedSeats = 0;
 
     Theatre(int numberOfSeats, String name){
         theatreName = name;
@@ -74,9 +95,7 @@ class Theatre {
         }
     }
 
-    public synchronized List<Seat> returnSeats(){
-        return seats;
-    }
+    public synchronized List<Seat> returnSeats(){ return seats; }
 
     public synchronized Boolean isAvailableSeats(){
         for (Seat seat : seats) {
@@ -88,13 +107,15 @@ class Theatre {
         return false;
     }
 
-    public int getNumberOfSeats(){
-        return numberOfSeats;
-    }
+    // SETTERS
+    public synchronized void setTotalPurchasedSeats(int add){ totalPurchasedSeats += add; }
+    public synchronized void setTotalReservedSeats(int add){ totalReservedSeats += add; }
 
-    public String getTheatreName(){
-        return theatreName;
-    }
+    // GETTERS
+    public int getNumberOfSeats(){ return numberOfSeats; }
+    public String getTheatreName(){ return theatreName; }
+    public int getTotalPurchasedSeats(){ return totalPurchasedSeats; }
+    public int getTotalReservedSeats(){ return totalReservedSeats; }
 }
 
 class Seat {
@@ -152,20 +173,21 @@ class User implements Runnable {
     private int seatsPurchased = 0;
 
     private List<Integer> reservedSeats = new ArrayList<Integer>();
-    
 
     User(Theatre theatre){
         // nameOfPerson = name;
         this.theatre = theatre;
         seatsToPurchase = (int) (Math.random() * ((3 - 1) + 1) + 1);
+        // System.out.println(seatsToPurchase);
     }
 
     public synchronized void run() {
 
         // Loop through each seat
+
         for (int j = 0; j < theatre.getNumberOfSeats(); j++) {
             // if the User reaches the maximum amount of seats he wished to purchase
-            if(seatsPurchased == seatsToPurchase || !theatre.isAvailableSeats()){ break; }
+            if(reservedSeats.size() == seatsToPurchase || !theatre.isAvailableSeats()){ break; }
             // if seat is reserved continue
             if(theatre.returnSeats().get(j).getReservationStatus() == true){
                 continue;
@@ -173,11 +195,11 @@ class User implements Runnable {
                 Boolean reserved = theatre.returnSeats().get(j).setReserved();
                 if(reserved){
                     reservedSeats.add(theatre.returnSeats().get(j).getSeatNumber());
-                    System.out.println(Thread.currentThread().getName() + " Reserved " + theatre.returnSeats().get(j).getSeatNumber());
+                    System.out.println(Thread.currentThread().getName() + " Reserved Seat Number (" + (theatre.returnSeats().get(j).getSeatNumber()) + ")");
                 }
                 int seatNumber = j;
                 for(int x = 0; x < seatsToPurchase; x++){
-                    if(!theatre.isAvailableSeats()){
+                    if(reservedSeats.size() == seatsToPurchase || !theatre.isAvailableSeats()){
                         break;
                     }
                     
@@ -187,22 +209,24 @@ class User implements Runnable {
                         Boolean seatReserved = theatre.returnSeats().get(seatNumber).setReserved();
                         if(seatReserved){
                             reservedSeats.add(theatre.returnSeats().get(seatNumber).getSeatNumber());
-                            System.out.println(Thread.currentThread().getName() + " Reserved " + theatre.returnSeats().get(seatNumber).getSeatNumber());
+                            System.out.println(Thread.currentThread().getName() + " Reserved Seat Number (" + (theatre.returnSeats().get(seatNumber).getSeatNumber()) + ")");
+                        }else{
+                            x -= 1;
                         }
                     }
                     seatNumber += 1;
                 }
                 j = seatNumber;
-                purchaseSeats();
-
             }
         }
 
+
+        purchaseSeats();
+
         if(seatsPurchased > 0){
-            System.out.println(Thread.currentThread().getName() + " purchased " + seatsPurchased + " seat(s)." + " | Reserved: " + reservedSeats.size());
-            // for (Integer seat : reservedSeats) {
-            //     System.out.println(seat + ",");
-            // }
+            System.out.println(Thread.currentThread().getName() + " purchased " + seatsPurchased + " seat(s)." + " | Reserved: " + reservedSeats);
+            theatre.setTotalReservedSeats(reservedSeats.size());
+            theatre.setTotalPurchasedSeats(seatsPurchased);
         }
 
     }
