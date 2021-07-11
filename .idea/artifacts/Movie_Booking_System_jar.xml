@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="Movie-Booking-System:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/Movie_Booking_System_jar</output-path>
+    <root id="archive" name="Movie-Booking-System.jar">
+      <element id="module-output" name="Movie-Booking-System" />
+    </root>
+  </artifact>
+</component>
