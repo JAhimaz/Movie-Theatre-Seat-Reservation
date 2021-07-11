@@ -58,7 +58,7 @@ public class Main {
         // whats used for verifying the purchase of each seat.
         System.out.println("\n\n════════════════════════════════════════════════════════════════════════════════");
         System.out.println("\n                               Seat Verification\n");
-        System.out.println("\n════════════════════════════════════════════════════════════════════════════════\n\n");
+        System.out.println("════════════════════════════════════════════════════════════════════════════════\n\n");
         for (int i = 0; i < theatre.getNumberOfSeats(); i++) {
             // This will loop through all the seats in the theatre and return their current status as well as who purchased the seat.
             System.out.println("Seat Number (" + (theatre.returnSeats().get(i).getSeatNumber()) + ") : " + theatre.returnSeats().get(i).getStatusOfSeat() + " | Owned By: " + theatre.returnSeats().get(i).getPurchaser());
